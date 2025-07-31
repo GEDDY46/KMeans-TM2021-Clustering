@@ -4,13 +4,18 @@ import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 
+batter_names = None
+
 def load_data(file_path):
     """
     File_Path: In Current Folder & Data is a Bunch of Statistics for a Df of different Hitters
     
     """
     try:
+        global batter_names
+
         data = pd.read_excel(file_path)
+        batter_names = data['Batter']
         data = data.drop("Batter", axis=1, errors='ignore')  # Remove 'Batter' column if it exists`
         return data
     except Exception as e:
@@ -239,6 +244,8 @@ def main():
     data = load_data("combined_stats.xlsx")
 
     if data is not None:
+        global batter_names
+
         #drop NA: Required for K-Means (Required)
         unscaled_data = remove_NA(data)
 
@@ -262,6 +269,13 @@ def main():
         # Map the cluster assignments back using index
         data.loc[data_with_clusters.index, 'Cluster'] = data_with_clusters['Cluster']
 
+        data.insert(0, 'Batter', batter_names)
+        data_with_clusters.insert(
+            0, 
+            'Batter', 
+            batter_names.loc[data_with_clusters.index].values
+        )
+
         print()
         print("Returned: ")
         print("Original DF")
@@ -279,6 +293,10 @@ def main():
         print("Returned ")
         print("===== KMeans Clustering File Finished =====")
         print()
+
+        data.to_excel("combined_stats_with_clusters.xlsx")
+        data_with_clusters.to_excel("filtered_nonNA_combined_stats_with_clusters.xlsx")
+        clustered_stats.to_excel("clustered_group_statistics.xlsx")
 
         # All Hitters with Clusters | Filtered Hitters with Clusters | Clustered Statistics & Groupings
         return data, data_with_clusters, clustered_stats
